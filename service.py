@@ -11,6 +11,9 @@ class FileManager:
         self.stash_dir = "stash"
         self.bot = bot
 
+        if not os.path.exists(self.working_dir):
+            os.makedirs(self.working_dir)
+
         if not os.path.exists(self.stash_dir):
             os.makedirs(self.stash_dir)
 

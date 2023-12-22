@@ -3,9 +3,10 @@ import threading
 
 import dotenv
 import telebot
+from telebot import custom_filters
 from telebot.callback_data import CallbackData, CallbackDataFilter
 from telebot.custom_filters import AdvancedCustomFilter, types
-
+import config
 from db_connect import DBManager
 from lexicon import LEXICON
 from service import FileManager
@@ -13,12 +14,12 @@ from session import Session
 
 dotenv.load_dotenv()
 
-BOT_TOKEN = os.environ.get('BOT_TOKEN')
+BOT_TOKEN = config.BOT_TOKEN
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode=None)
 
-file_manager = FileManager('images', bot)
-ADMIN_ID = os.environ.get('ADMIN_ID')
+file_manager = FileManager(config.WORKING_DIR, bot)
+ADMIN_ID = config.ADMIN_ID
 
 db_manager = DBManager('data/db.json')
 session = Session(db_manager)
@@ -32,6 +33,16 @@ class SessionCallbackFilter(AdvancedCustomFilter):
 
     def check(self, call: types.CallbackQuery, config: CallbackDataFilter):
         return config.check(query=call)
+
+
+@bot.message_handler(commands=['start'], chat_id=[ADMIN_ID])
+def send_welcome_admin(message):
+    bot.reply_to(message, text=LEXICON['greeting_admin'].format(file_manager.working_dir))
+
+
+@bot.message_handler(commands=['help'], chat_id=[ADMIN_ID])
+def send_welcome_admin(message):
+    bot.reply_to(message, text=LEXICON['help_text'])
 
 
 @bot.message_handler(commands=['start'])
@@ -57,6 +68,10 @@ def session_open_request(message: telebot.types.Message):
 def handle_open_session_callback_button(query: telebot.types.CallbackQuery):
     callback_data = session_callback_factory.parse(callback_data=query.data)
 
+    close_all_keyboard = telebot.types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    close_all_btn = telebot.types.KeyboardButton(text='/close_all')
+    close_all_keyboard.add(close_all_btn)
+
     if session.is_locked:
 
         bot.send_message(ADMIN_ID, text=LEXICON['session_is_closed_now'].format(session.active_chat_id))
@@ -69,6 +84,7 @@ def handle_open_session_callback_button(query: telebot.types.CallbackQuery):
 
             session.lock(user_id, user_name)
             bot.send_message(user_id, text=LEXICON['to_user_session_is_open'])
+            bot.send_message(ADMIN_ID, text=LEXICON['admin_session_is_opened'].format(user_name))
         else:
             keyboard = telebot.types.InlineKeyboardMarkup(row_width=2)
             send_btn = telebot.types.InlineKeyboardButton(text="Отправить клиенту",
@@ -86,7 +102,8 @@ def handle_open_session_callback_button(query: telebot.types.CallbackQuery):
             keyboard.add(send_btn, stash_btn)
             bot.send_message(ADMIN_ID, text=LEXICON['files_exist_in_working_dir'].format(files_exist),
                              reply_markup=keyboard)
-
+    bot.send_message(chat_id=ADMIN_ID, reply_markup=close_all_keyboard,
+                     text='Вызовете команду /close_all для закрытия всех сессий')
     print(f"\nSession status: {session.data['status']}")
 
 
@@ -104,7 +121,7 @@ def handle_send_or_stash_button(query: telebot.types.CallbackQuery):
     bot.send_message(user_id, text=LEXICON['to_user_session_is_open'])
 
 
-@bot.message_handler(commands=['unlock'])
+@bot.message_handler(chat_id=[ADMIN_ID], commands=['close_all'])
 def session_unlock_handler(message: telebot.types.Message):
     session.unlock()
     bot.send_message(ADMIN_ID, text=LEXICON['session_was_been_unlocked'])
@@ -114,5 +131,8 @@ def session_unlock_handler(message: telebot.types.Message):
 if __name__ == '__main__':
     watchdog_thread = threading.Thread(target=file_manager.handle_events, args=(bot,))
     watchdog_thread.start()
+
     bot.add_custom_filter(SessionCallbackFilter())
+    bot.add_custom_filter(custom_filters.ChatFilter())
+
     bot.infinity_polling()
