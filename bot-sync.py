@@ -6,6 +6,7 @@ import telebot
 from telebot import custom_filters
 from telebot.callback_data import CallbackData, CallbackDataFilter
 from telebot.custom_filters import AdvancedCustomFilter, types
+
 import config
 from db_connect import DBManager
 from lexicon import LEXICON
@@ -18,10 +19,16 @@ BOT_TOKEN = config.BOT_TOKEN
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode=None)
 
-file_manager = FileManager(config.WORKING_DIR, bot)
 ADMIN_ID = config.ADMIN_ID
 
-db_manager = DBManager('data/db.json')
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+file_manager = FileManager(working_dir=config.WORKING_DIR,
+                           bot=bot,
+                           sent_dir=str(os.path.join(base_dir, config.SENT_DIR)),
+                           stash_dir=str(os.path.join(base_dir, config.STASH_DIR)))
+db_manager = DBManager(os.path.join(base_dir, 'data', 'db.json'))
+
 session = Session(db_manager)
 
 session_callback_factory = CallbackData("action", "user_id", "user_name", prefix="session")

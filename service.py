@@ -6,9 +6,10 @@ from dotenv import load_dotenv
 
 
 class FileManager:
-    def __init__(self, working_dir: str, bot: telebot.TeleBot) -> None:
+    def __init__(self, working_dir: str, bot: telebot.TeleBot, sent_dir: str, stash_dir: str) -> None:
         self.working_dir = working_dir
-        self.stash_dir = "stash"
+        self.stash_dir = stash_dir
+        self.sent_dir = sent_dir
         self.bot = bot
 
         if not os.path.exists(self.working_dir):
@@ -32,7 +33,7 @@ class FileManager:
             return
         print(f"\rCurrent receiver chat_id: {user_id}", end='')
 
-        user_sent_folder_name = f'sent/{user_name}_{user_id}'
+        user_sent_folder_name = f'{self.sent_dir}/{user_name}_{user_id}'
         if not os.path.exists(user_sent_folder_name):
             os.mkdir(user_sent_folder_name)
 
