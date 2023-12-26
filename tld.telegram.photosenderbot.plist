@@ -1,0 +1,18 @@
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>Label</key>
+    <string>tld.telegram.photosenderbot</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/maxim/Library/Caches/pypoetry/virtualenvs/pfotobooth-bot-mf9q4e_S-py3.12/bin/python3</string>
+        <string>/Users/maxim/PycharmProjects/pfotobooth_bot/bot-sync.py</string>
+    </array>
+    <key>UserName</key>
+    <string>maxim</string>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>
