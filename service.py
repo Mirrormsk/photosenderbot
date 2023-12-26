@@ -37,7 +37,7 @@ class FileManager:
         if not os.path.exists(user_sent_folder_name):
             os.mkdir(user_sent_folder_name)
 
-        files = os.listdir(self.working_dir)
+        files = [file for file in os.listdir(self.working_dir) if not file.startswith('.')]
         for filename in files:
             filepath = f'{self.working_dir}/{filename}'
             self.send_file(bot, filepath, user_id=user_id)
